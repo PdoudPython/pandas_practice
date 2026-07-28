@@ -19,21 +19,21 @@ def inspect_data(df):
 
 def handle_missing_values(df):
     """Decide what to do with missing values in each column."""
-    # TODO: think column by column - not every missing value should be handled the same way
-    #   - some columns might make sense to fill with a placeholder (e.g. "Unknown")
-    #   - some columns might make sense to drop rows entirely
-    #   - some columns might not matter much for your analysis - leave them
-    # TODO: use df.fillna() and/or df.dropna() as appropriate
-    # return the modified DataFrame
-    df.columns.str.lower()
-    df.fillna({'director': 'NOT LISTED', 'cast': 'NOT LISTED', 'country': 'NOT LISTED', 'date_added': ''})
+    df.columns = df.columns.str.lower()
+    df.columns = df.columns.str.strip()
+    df= df.fillna({
+        'director': 'NOT LISTED',
+        'cast': 'NOT LISTED',
+        'country': 'NOT LISTED',
+        'rating': 'No Rating'
+        })
+    df = df.dropna(subset=['date_added', 'duration'])
+    return df
 
 
 def handle_duplicates(df):
     """Remove duplicate rows, if any exist."""
-    # TODO: use df.drop_duplicates()
-    # return the modified DataFrame
-    pass
+    df = df.drop_duplicates()
 
 
 def fix_data_types(df):
