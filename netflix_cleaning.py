@@ -34,6 +34,7 @@ def handle_missing_values(df):
 def handle_duplicates(df):
     """Remove duplicate rows, if any exist."""
     df = df.drop_duplicates()
+    return df
 
 
 def fix_data_types(df):
