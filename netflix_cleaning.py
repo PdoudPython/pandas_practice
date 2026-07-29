@@ -1,7 +1,7 @@
 import pandas as pd
 
 FILENAME = "data/netflix_titles.csv"          # adjust path if needed
-OUTPUT_FILENAME = "netflix_titles_clean.csv"
+OUTPUT_FILENAME = "data/netflix_titles_clean.csv"
 
 
 def load_data(filename):
@@ -39,25 +39,21 @@ def handle_duplicates(df):
 
 def fix_data_types(df):
     """Correct columns that aren't in a useful type (e.g. dates stored as strings)."""
-    # TODO: look at df.dtypes - which columns should be datetime, int, category, etc.?
-    # TODO: use pd.to_datetime() on any date columns
-    # return the modified DataFrame
-    pass
-
+    print(df.dtypes)
+    df['date_added'] = df['date_added'].apply(pd.to_datetime)
+    return df
 
 def standardize_text_columns(df):
-    """Clean up inconsistent text formatting (casing, whitespace, etc.)."""
-    # TODO: pick a column or two (e.g. 'country', 'rating') and check for inconsistent values
-    #   - hint: df['column'].unique() or .value_counts() will show you what's actually in there
-    # TODO: use .str.strip(), .str.title(), or similar as needed
-    # return the modified DataFrame
-    pass
-
+    print(df['country'].value_counts())
+    print(df['rating'].value_counts())
+    wrong_rows = df[df['rating'].isin(['74 min', '84 min', '66 min'])].index
+    df.loc[wrong_rows, 'duration'] = df.loc[wrong_rows, 'rating']
+    df = df.replace({'rating': {'74 min': 'No Rating', '84 min': 'No Rating', '66 min': 'No Rating'}})
+    return df
 
 def save_clean_data(df, filename):
     """Save the cleaned DataFrame to a new CSV file."""
-    # TODO: use df.to_csv(filename, index=False)
-    pass
+    df.to_csv(filename, index=False)
 
 
 def main():
@@ -65,15 +61,16 @@ def main():
     inspect_data(df)
 
     # TODO: call your cleaning functions in a sensible order
-    # df = handle_missing_values(df)
-    # df = handle_duplicates(df)
-    # df = fix_data_types(df)
-    # df = standardize_text_columns(df)
+    df = standardize_text_columns(df)
+    df = handle_missing_values(df)
+    df = handle_duplicates(df)
+    df = fix_data_types(df)
+    
 
     # TODO: inspect again after cleaning to confirm it worked
-    # inspect_data(df)
+    inspect_data(df)
 
-    # save_clean_data(df, OUTPUT_FILENAME)
+    save_clean_data(df, OUTPUT_FILENAME)
 
 
 if __name__ == "__main__":
