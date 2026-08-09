@@ -40,7 +40,7 @@ def plot_director_cast_pairs(conn):
     """Bar chart: most frequent director/cast pairings."""
     df = get_top_director_cast_pairs(conn, limit=5)
 
-    df['pair'] = df['director'] + ' w/ ' + df['show_cast']
+    df['pair'] = df['director'] + ' w/\n ' + df['show_cast'].str.replace(', ', '\n')
 
     df.plot(kind='barh', x='pair', y='production')
     plt.title('Most Frequent Director/Cast Pairings')
