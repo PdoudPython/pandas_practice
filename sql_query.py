@@ -2,7 +2,6 @@ import psycopg2
 from psycopg2.extras import execute_values
 import pandas as pd
 
-# TODO: fill in your actual Postgres connection details
 DB_CONFIG = {
     "host": "localhost",
     "port": 5432,
@@ -17,13 +16,15 @@ TABLE_NAME = "netflix"
 
 def create_connection(config):
     """Create a connection to the Postgres database."""
-    # TODO: use psycopg2.connect(**config) and return the connection object
     try:
         conn = psycopg2.connect(**config)
     except psycopg2.OperationalError as e:
         print(f"Database connection failed: {e}")
         conn = None
     return conn
+
+def get_db_connection():
+    return create_connection(DB_CONFIG)
 
 def create_netflix_table(conn):
     """Create the netflix table if it doesn't already exist."""
@@ -63,7 +64,6 @@ def load_csv_into_db(conn, csv_filename):
     execute_values(cur, insert_query, df_tuples)
 
     conn.commit()
-    
 
 
 def run_query(conn, query):
@@ -72,56 +72,86 @@ def run_query(conn, query):
     return df
 
 
-def main():
-    conn = create_connection(DB_CONFIG)
-    create_netflix_table(conn)
-    load_csv_into_db(conn, CSV_SOURCE)
-
-    movies_and_shows = """
-        SELECT type, COUNT(*) 
+def get_type_distribution(conn):
+    """Count of Movies vs TV Shows."""
+    query = """
+        SELECT type, COUNT(*) as type_count
         FROM netflix 
         GROUP BY type;
     """
-    result = run_query(conn, movies_and_shows)
-    print(result)
+    return run_query(conn, query)
 
-    title_by_country = """
+
+def get_titles_by_country(conn, limit=None):
+    """Count of titles per country, ranked descending. Optionally limited to top N."""
+    query = """
         SELECT country, COUNT(*) as title_count 
         FROM netflix 
         GROUP BY country 
-        ORDER BY title_count DESC;
+        ORDER BY title_count DESC
     """
-    result = run_query(conn, title_by_country)
-    print(result)
+    if limit is not None:
+        query += f" LIMIT {limit};"
+    else:
+        query += ";"
+    return run_query(conn, query)
 
-    most_common_genre = """
-        SELECT listed_in, COUNT(*) as most_common
+
+def get_genre_distribution(conn):
+    """Count of titles per genre, ranked descending."""
+    query = """
+        SELECT listed_in, COUNT(*) as genre_count
         FROM netflix 
         GROUP BY listed_in 
-        ORDER BY most_common DESC;
+        ORDER BY genre_count DESC;
     """
-    result = run_query(conn, most_common_genre)
-    print(result)
+    return run_query(conn, query)
 
-    titles_per_year = """
-        SELECT EXTRACT(YEAR FROM date_added) as year_added, COUNT(*) as title_per_year
+
+def get_titles_by_year(conn):
+    """Count of titles added per year."""
+    query = """
+        SELECT EXTRACT(YEAR FROM date_added) as year_added, COUNT(*) as title_count
         FROM netflix 
         GROUP BY year_added
-        ORDER BY title_per_year DESC;
+        ORDER BY year_added;
     """
-    result = run_query(conn, titles_per_year)
-    print(result)
+    return run_query(conn, query)
 
-    common_director_and_cast = """
+
+def get_top_director_cast_pairs(conn, limit=5):
+    """Most frequent director/cast pairings, excluding unlisted values."""
+    query = f"""
         SELECT director, show_cast, COUNT(*) as production
         FROM netflix 
         WHERE director != 'NOT LISTED' and show_cast != 'NOT LISTED'
         GROUP BY director, show_cast
         ORDER BY production DESC
-        LIMIT 5;
+        LIMIT {limit};
     """
-    result = run_query(conn, common_director_and_cast)
-    print(result)
+    return run_query(conn, query)
+
+
+def main():
+    conn = create_connection(DB_CONFIG)
+    create_netflix_table(conn)
+    load_csv_into_db(conn, CSV_SOURCE)
+
+    type_distribution = get_type_distribution(conn)
+    print(type_distribution)
+
+    titles_by_country = get_titles_by_country(conn, limit=None)
+    print(titles_by_country)
+
+    genre_distribution = get_genre_distribution(conn)
+    print(genre_distribution)
+
+    titles_by_year = get_titles_by_year(conn)
+    print(titles_by_year)
+
+    top_director_cast_pairs = get_top_director_cast_pairs(conn, limit=5)
+    print(top_director_cast_pairs)
+
     conn.close()
 
 

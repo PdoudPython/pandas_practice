@@ -1,55 +1,64 @@
-import pandas as pd
 import matplotlib.pyplot as plt
-
-FILENAME = "netflix_titles_clean.csv"   # use your cleaned dataset from the pandas project
-
-
-def load_data(filename):
-    """Load the cleaned CSV into a DataFrame."""
-    # TODO: use pd.read_csv() and return the DataFrame
-    pass
+import pandas as pd
+from sql_query import get_type_distribution, get_titles_by_country, get_genre_distribution, get_titles_by_year, get_top_director_cast_pairs, get_db_connection
 
 
-def plot_type_distribution(df):
+def plot_type_distribution(conn):
     """Bar chart: count of Movies vs TV Shows."""
-    # TODO: use df['type'].value_counts()
-    # TODO: plot with .plot(kind='bar') or plt.bar()
-    # TODO: add a title, xlabel, ylabel
-    # TODO: plt.show()
-    pass
+    df = get_type_distribution(conn)
+
+    df.plot(kind='bar', x='type', y='type_count')
+    plt.title('Movies vs TV Shows Type Distribution')
+    plt.xlabel('Movies vs TV Shows')
+    plt.ylabel('Count')
+    plt.show()
 
 
-def plot_titles_over_time(df):
+
+def plot_titles_by_year(conn):
     """Line chart: number of titles added per year."""
-    # TODO: you'll need a proper datetime column (from the cleaning project) to extract year
-    # TODO: group by year and count titles, then plot as a line chart
-    pass
+    df = get_titles_by_year(conn)
 
+    df.plot(kind='line', x='year_added', y='title_count')
+    plt.title('Number of Titles Added to Netflix Each Year')
+    plt.xlabel('Year Added to Netflix')
+    plt.ylabel('Number of Titles Added')
+    plt.show()
 
-def plot_top_countries(df):
+def plot_top_countries(conn):
     """Bar chart: top N countries by number of titles produced."""
-    # TODO: some rows may have multiple countries listed (comma-separated) - think about
-    #   whether you want to split those out or just count the raw string as-is
-    # TODO: use value_counts() on the country column, take the top N with .head(N)
-    # TODO: plot as a horizontal or vertical bar chart
-    pass
+    df = get_titles_by_country(conn, limit=10)
+
+    df.plot(kind='barh', x='country', y='title_count')
+    plt.title('Number of Titles Per Country')
+    plt.xlabel('Number of Titles')
+    plt.ylabel('Country')
+    plt.show()
 
 
-def plot_rating_distribution(df):
-    """Bar chart: distribution of content ratings (e.g. PG, TV-MA, etc.)."""
-    # TODO: similar approach to plot_type_distribution but for the 'rating' column
-    pass
+def plot_director_cast_pairs(conn):
+    """Bar chart: most frequent director/cast pairings."""
+    df = get_top_director_cast_pairs(conn, limit=5)
+
+    df['pair'] = df['director'] + ' w/ ' + df['show_cast']
+
+    df.plot(kind='barh', x='pair', y='production')
+    plt.title('Most Frequent Director/Cast Pairings')
+    plt.xlabel('Number of Times Paired')
+    plt.ylabel('Director and Cast Member')
+    plt.show()
+
 
 
 def main():
-    df = load_data(FILENAME)
+    conn = get_db_connection()
 
-    # TODO: call each plotting function
-    # plot_type_distribution(df)
-    # plot_titles_over_time(df)
-    # plot_top_countries(df)
-    # plot_rating_distribution(df)
+    plot_type_distribution(conn)
+    plot_titles_by_year(conn)
+    plot_top_countries(conn)
+    plot_director_cast_pairs(conn)
 
+    conn.close()
 
 if __name__ == "__main__":
     main()
